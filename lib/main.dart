@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'calculator.dart';
 import 'l10n/app_localizations.dart';
+import 'suitcase_shell.dart';
 
 void main() => runApp(const App());
 
@@ -18,12 +19,12 @@ class App extends StatelessWidget {
         ],
         supportedLocales: AppLocalizations.supportedLocales,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFD95298)),
           useMaterial3: true,
         ),
         darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,
+            seedColor: const Color(0xFFD95298),
             brightness: Brightness.dark,
           ),
           useMaterial3: true,
@@ -77,53 +78,55 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
-    final colors = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(title: Text(strings.title), centerTitle: true),
+      backgroundColor: dark ? const Color(0xFF231D2A) : const Color(0xFFFFEFF7),
+      appBar: AppBar(
+        title: Text(strings.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
-            child: LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+              child: SuitcaseShell(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                       decoration: BoxDecoration(
-                        color: colors.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(24),
+                        color: const Color(0xFFFFF4FA),
+                        border: Border.all(color: suitcaseInk, width: 2),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [BoxShadow(color: Color(0x33792A55), offset: Offset(0, 4))],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
                             _calculator.operation ?? strings.result,
-                            style: TextStyle(color: colors.onSurfaceVariant),
+                            style: const TextStyle(color: Color(0xFF81536D)),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 6),
                           Semantics(
                             liveRegion: true,
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerRight,
                               child: Text(
-                                _calculator.hasError
-                                    ? strings.calculationError
-                                    : _calculator.display,
+                                _calculator.hasError ? strings.calculationError : _calculator.display,
                                 key: const ValueKey('display'),
-                                textDirection: _calculator.hasError
-                                    ? Directionality.of(context)
-                                    : TextDirection.ltr,
+                                textDirection: _calculator.hasError ? Directionality.of(context) : TextDirection.ltr,
                                 style: TextStyle(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.w500,
-                                  color: _calculator.hasError
-                                      ? colors.error
-                                      : colors.onSurface,
+                                  fontSize: 44,
+                                  fontWeight: FontWeight.w600,
+                                  color: _calculator.hasError ? const Color(0xFFB42337) : suitcaseInk,
                                 ),
                               ),
                             ),
@@ -131,16 +134,17 @@ class _HomeState extends State<Home> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 18),
                     Directionality(
                       textDirection: TextDirection.ltr,
                       child: Column(
                         children: _rows.map((row) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.only(bottom: 9),
                           child: Row(
                             children: row.map((key) {
                               final isOperator = ['÷', '×', '−', '+'].contains(key);
                               final selected = _calculator.operation == key;
+                              final accent = key == '=' || selected;
                               final label = switch (key) {
                                 'C' => strings.clear,
                                 '⌫' => strings.backspace,
@@ -149,31 +153,30 @@ class _HomeState extends State<Home> {
                               };
                               return Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 3),
                                   child: Semantics(
                                     label: label,
                                     excludeSemantics: true,
                                     button: true,
+                                    selected: selected,
+                                    onTap: () => _press(key),
                                     child: FilledButton(
                                       key: ValueKey('key_$key'),
                                       onPressed: () => _press(key),
                                       style: FilledButton.styleFrom(
-                                        minimumSize: const Size(0, 64),
+                                        minimumSize: const Size(0, 56),
                                         padding: EdgeInsets.zero,
-                                        backgroundColor: key == '=' || selected
-                                            ? colors.primary
+                                        elevation: 3,
+                                        shadowColor: const Color(0xFF792A55),
+                                        backgroundColor: accent
+                                            ? suitcaseInk
                                             : isOperator
-                                                ? colors.secondaryContainer
-                                                : colors.surfaceContainerHighest,
-                                        foregroundColor: key == '=' || selected
-                                            ? colors.onPrimary
-                                            : isOperator
-                                                ? colors.onSecondaryContainer
-                                                : colors.onSurface,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(18),
-                                        ),
-                                        textStyle: const TextStyle(fontSize: 26),
+                                                ? const Color(0xFFB6E8FA)
+                                                : const Color(0xFFFFE4F2),
+                                        foregroundColor: accent ? Colors.white : suitcaseInk,
+                                        side: BorderSide(color: suitcaseInk.withAlpha(80)),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
+                                        textStyle: const TextStyle(fontSize: 25, fontWeight: FontWeight.w600),
                                       ),
                                       child: Text(key),
                                     ),
