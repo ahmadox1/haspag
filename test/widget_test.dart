@@ -23,22 +23,35 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('keys remain reachable on a small Arabic dark screen', (tester) async {
+  testWidgets('keys remain reachable on a small Arabic dark screen', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
-    tester.platformDispatcher.localeTestValue = const Locale('ar');
+    // MaterialApp resolves the device language from the preferred locales list.
+    tester.platformDispatcher.localesTestValue = const [Locale('ar')];
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
-      tester.platformDispatcher.clearLocaleTestValue();
+      tester.platformDispatcher.clearLocalesTestValue();
       tester.platformDispatcher.clearPlatformBrightnessTestValue();
     });
     await tester.pumpWidget(const App());
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byType(Home));
+    expect(Localizations.localeOf(context).languageCode, 'ar');
+    expect(Directionality.of(context), TextDirection.rtl);
+    expect(Theme.of(context).brightness, Brightness.dark);
+
     for (final key in ['8', '÷', '0', '=']) {
       await press(tester, key);
     }
-    expect(tester.widget<Text>(find.byKey(const ValueKey('display'))).data, 'تعذّر الحساب');
+    expect(
+      tester.widget<Text>(find.byKey(const ValueKey('display'))).data,
+      'تعذّر الحساب',
+    );
     await press(tester, 'C');
     expect(tester.widget<Text>(find.byKey(const ValueKey('display'))).data, '0');
     expect(tester.takeException(), isNull);
